@@ -64,7 +64,7 @@ flowchart TD
 ## 🚀 Live Interactive Simulator
 
 ### How to Run:
-1. Open [`index.html`](index.html) in any modern web browser.
+1. Open https://yashanarase31-afk.github.io/ecoguard-alexa-mcp/ in any modern web browser.
 2. Click **"Trigger Anomaly & Auto-SMS"** or **"🎬 Auto-Play Video Demo"**.
 3. The system automatically fires the background SMS payload directly to **Yash** and **Pranav** instantly with **zero buttons to press**!
 4. The screen shows the delivery receipts, latency in milliseconds, and real-time wire logs for your video recording.
