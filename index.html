@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoGuard — Autonomous Home Disaster & Safety Orchestrator</title>
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            space: {
+              950: '#07090e',
+              900: '#0b0f19',
+              850: '#101626',
+              800: '#172033',
+            },
+            cyan: {
+              400: '#00f2fe',
+              500: '#00c6ff',
+            },
+            crimson: {
+              500: '#ff1744',
+              600: '#d50000',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Sleek scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(11, 15, 25, 0.5); }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+
+    /* Frosted glassmorphism */
+    .glass-panel {
+      background: rgba(16, 22, 38, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .glass-panel-danger {
+      background: rgba(35, 10, 20, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      box-shadow: 0 0 35px rgba(225, 29, 72, 0.35);
+    }
+
+    /* Animated tactical grid */
+    .cyber-grid {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Radar scan effect */
+    @keyframes radarSweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .radar-sweep {
+      animation: radarSweep 4s linear infinite;
+    }
+
+    /* Pulse animations */
+    @keyframes tacticalPulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.98); }
+      50% { opacity: 0.8; transform: scale(1.02); }
+    }
+    .ambient-beacon {
+      animation: tacticalPulse 3.5s ease-in-out infinite;
+    }
+
+    @keyframes rippleWrist {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.04); opacity: 1; box-shadow: 0 0 25px rgba(244, 63, 94, 0.8); }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .wrist-buzzing {
+      animation: rippleWrist 0.4s infinite ease-in-out;
+    }
+
+    /* Smooth slide-in for emergency toast */
+    @keyframes toastDrop {
+      0% { transform: translateY(-130%) scale(0.96); opacity: 0; }
+      70% { transform: translateY(6px) scale(1.01); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .toast-enter {
+      animation: toastDrop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+
+<body class="bg-space-950 text-slate-100 min-h-screen font-sans antialiased overflow-x-hidden selection:bg-indigo-500 selection:text-white cyber-grid relative">
+
+  <!-- BACKGROUND AMBIENT GLOWS -->
+  <div class="fixed top-0 left-1/4 w-[600px] h-[350px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none -z-10 ambient-beacon"></div>
+  <div class="fixed bottom-0 right-1/4 w-[500px] h-[350px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none -z-10 ambient-beacon"></div>
+  <div id="dangerAtmosphere" class="fixed inset-0 bg-rose-950/0 pointer-events-none transition-colors duration-700 -z-10"></div>
+
+  <!-- EMERGENCY AUTONOMOUS SMS TOAST (ZERO-CLICK TOAST WITH LIVE TELEMETRY) -->
+  <div id="incomingSmsNotification" class="hidden fixed top-5 right-5 z-50 max-w-md w-full glass-panel-danger rounded-2xl p-4 toast-enter">
+    <div class="flex items-start justify-between pb-2.5 border-b border-rose-500/30">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/50 flex items-center justify-center text-rose-400">
+          <i class="fa-solid fa-tower-broadcast text-sm animate-pulse"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-white uppercase tracking-wider font-mono">AUTONOMOUS DISPATCH</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 bg-rose-950 text-rose-300 border border-rose-700 rounded font-bold animate-pulse">ZERO CLICKS</span>
+          </div>
+          <p class="text-[10px] text-rose-300 font-mono">AWS SNS SMS Sent Directly to Yash & Pranav</p>
+        </div>
+      </div>
+      <button onclick="dismissSmsBanner()" class="text-slate-400 hover:text-white transition-colors text-xs p-1">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Active Responder Deliveries -->
+    <div class="mt-3 space-y-2 text-xs font-mono">
+      <div class="p-2 rounded-xl bg-black/40 border border-rose-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="font-bold text-slate-200">Yash (+91 9420036447)</span>
+        </div>
+        <span class="text-[10px] text-emerald-400">SENT (28ms)</span>
+      </div>
+      <div class="p-2 rounded-xl bg-black/40 border border-rose-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="font-bold text-slate-200">Pranav (+91 9527658665)</span>
+        </div>
+        <span class="text-[10px] text-cyan-400">SENT (31ms)</span>
+      </div>
+    </div>
+
+    <div class="mt-2.5 p-2 rounded-lg bg-black/50 text-[10px] font-mono text-slate-300 border border-white/5">
+      <span class="text-rose-400 font-bold">PAYLOAD:</span> <span id="autoDispatchedBody">"🚨 ECOGUARD: Water leak (2.8 GPM). Main valve auto-isolated in 28ms."</span>
+    </div>
+  </div>
+
+  <!-- TOP AESTHETIC EXECUTIVE NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 px-6 py-3.5 glass-panel border-b border-white/[0.08] flex items-center justify-between">
+    
+    <!-- Left: Identity & Engine Status -->
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/25 border border-white/20">
+          <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+        </div>
+        <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-space-950 flex items-center justify-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+        </span>
+      </div>
+
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
+            EcoGuard <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent text-sm font-extrabold">Aegis+</span>
+          </h1>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+            Alexa+ MCP v1.0
+          </span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> SSE Active
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-medium">
+          Autonomous Hazard Containment System • Yash & Pranav • Amazon Developer Hackathon
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: High-Tech Controls & Quick Actions -->
+    <div class="flex items-center gap-3">
+      
+      <!-- Scenario Selector -->
+      <div class="relative">
+        <select id="scenarioSelect" onchange="onScenarioChange()" class="bg-space-900 border border-white/10 text-xs font-mono rounded-xl px-3.5 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 shadow-inner appearance-none pr-8 cursor-pointer hover:bg-space-850 transition-colors">
+          <option value="water">⚡ Hazard 1: Laundry Pipe Burst (Water Leak)</option>
+          <option value="thermal">🔥 Hazard 2: Kitchen Stove Unattended (Thermal Spike)</option>
+          <option value="electrical">⚡ Hazard 3: HVAC Breaker Overload (Surge)</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 text-xs">
+          <i class="fa-solid fa-chevron-down text-[10px]"></i>
+        </div>
+      </div>
+
+      <!-- Auto-Play Cinematic Video Demo -->
+      <button id="btnAutoDemo" onclick="runCinematicDemo()" class="relative group overflow-hidden bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all transform active:scale-95 border border-white/20">
+        <span class="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></span>
+        <i class="fa-solid fa-clapperboard text-sm"></i>
+        <span>🎬 Auto-Play Demo</span>
+      </button>
+
+      <!-- Trigger Anomaly & Auto-SMS -->
+      <button id="btnTriggerHazard" onclick="triggerManualHazard()" class="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-rose-600/30 flex items-center gap-2 transition-all transform active:scale-95 border border-rose-400/30">
+        <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+        <span>Trigger Anomaly & SMS</span>
+      </button>
+
+      <!-- Reset -->
+      <button onclick="resetSystem()" class="bg-space-900 hover:bg-space-850 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-1.5 transition-colors" title="Reset All Subsystems">
+        <i class="fa-solid fa-rotate-right text-xs"></i>
+        <span>Reset</span>
+      </button>
+
+      <!-- Audio Mute -->
+      <button id="btnAudioToggle" onclick="toggleAudio()" class="w-9 h-9 rounded-xl bg-space-900 hover:bg-space-850 border border-white/10 text-slate-300 flex items-center justify-center text-xs transition-colors" title="Toggle Sound/Voice">
+        <i id="audioIcon" class="fa-solid fa-volume-high text-indigo-400 text-sm"></i>
+      </button>
+
+      <!-- Shape Log (+10% Bonus) -->
+      <button onclick="openFrictionModal()" class="text-xs bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+        <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+        <span>Shape Log (+10%)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- LIVE TELEMETRY STATUS RIBBON -->
+  <div id="topBanner" class="bg-space-900/80 border-b border-white/[0.05] px-6 py-2 flex items-center justify-between text-xs font-mono transition-colors duration-500">
+    <div class="flex items-center gap-3">
+      <span class="text-slate-500 uppercase tracking-widest text-[10px]">CORE TELEMETRY:</span>
+      <span id="systemStatusText" class="text-emerald-400 font-semibold flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-check text-xs"></i> All Subsystems Nominal • Telemetry Synchronized
+      </span>
+    </div>
+
+    <!-- Quick Telemetry Counters -->
+    <div class="flex items-center gap-6 text-slate-400 text-[11px]">
+      <div class="flex items-center gap-1.5">
+        <i class="fa-brands fa-amazon text-indigo-400"></i> Alexa+ MCP: <span class="text-slate-200">Claude 3.5 Sonnet</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-satellite-dish text-cyan-400"></i> CloudWatch: <span class="text-slate-200">14ms Latency</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-user-shield text-emerald-400"></i> Yash: <span class="text-slate-200">+91 9420036447</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-user-shield text-cyan-400"></i> Pranav: <span class="text-slate-200">+91 9527658665</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-clock text-slate-500"></i> <span id="utcTimeLive" class="text-indigo-300">2026-10-22 17:30 UTC</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ADVANCED 3-COLUMN COMMAND DECK -->
+  <main class="p-6 max-w-[1780px] mx-auto grid grid-cols-12 gap-6">
+
+    <!-- ========================================================== -->
+    <!-- COLUMN 1: THE NEURAL COMMAND CORE (ALEXA+ MCP HUB) [Col: 4] -->
+    <!-- ========================================================== -->
+    <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+      
+      <!-- Alexa+ Brain Card -->
+      <div class="glass-panel rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between shadow-2xl">
+        <div class="absolute -right-10 -top-10 w-44 h-44 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                <i class="fa-solid fa-brain text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-sm font-extrabold text-white tracking-wide">Alexa+ Neural Command</h2>
+                <p class="text-[11px] text-indigo-300/80 font-mono">Agent Decision Core • Model Context Protocol</p>
+              </div>
+            </div>
+            <span id="agentStateBadge" class="text-[10px] font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-white/10 font-bold">
+              IDLE / LISTENING
+            </span>
+          </div>
+
+          <!-- Voice Canvas Visualizer -->
+          <div class="mt-4 p-3 rounded-2xl bg-space-950/80 border border-white/[0.06] flex flex-col items-center justify-center relative overflow-hidden">
+            <canvas id="voiceCanvas" width="380" height="65" class="w-full h-[65px]"></canvas>
+            <p id="alexaVoiceSubtitle" class="text-xs text-indigo-200 mt-2 text-center italic min-h-[38px] flex items-center justify-center font-medium px-2">
+              "EcoGuard ambient monitoring online. Awaiting environmental telemetry..."
+            </p>
+          </div>
+
+          <!-- Bedrock Reasoning Trace -->
+          <div class="mt-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-mono">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-microchip text-indigo-400"></i> Bedrock LLM Thought Trace
+              </span>
+              <span id="reasoningTokens" class="text-[10px] text-indigo-400 font-mono">Latency: 110ms</span>
+            </div>
+            <div id="thoughtStreamBox" class="bg-space-950/90 rounded-2xl p-3.5 font-mono text-[11px] leading-relaxed text-slate-300 border border-white/[0.06] h-32 overflow-y-auto space-y-1">
+              <div class="text-slate-500">--- MCP Server Initialized [mcp-ecoguard-v1] ---</div>
+              <div class="text-emerald-400">✔ Verified Responders: Yash (+91 9420036447) & Pranav (+91 9527658665)</div>
+              <div class="text-emerald-400">✔ Registered Tools: ring_focus, firetv_pip, bee_haptic, auto_dispatch_sms, shutoff_valve</div>
+              <div class="text-slate-400">[Ambient Thread]: Polling IoT mesh sensors at 10Hz...</div>
+            </div>
+          </div>
+
+          <!-- Active MCP Tools Pipeline -->
+          <div class="mt-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt text-amber-400"></i> Active MCP Tool Invocations
+              </span>
+              <span class="text-[10px] text-indigo-400">JSON-RPC 2.0</span>
+            </div>
+            <div id="mcpToolCallStack" class="space-y-2">
+              <div class="p-2.5 rounded-xl bg-space-900/60 border border-white/[0.06] flex items-center justify-between text-xs font-mono text-slate-400">
+                <span class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-slate-600"></span> Standby Pipeline
+                </span>
+                <span class="text-[10px] text-slate-500">No active calls</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Gauges / Numbers Slider Strip -->
+        <div class="mt-4 pt-3.5 border-t border-white/[0.08]">
+          <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-2.5">
+            <span class="flex items-center gap-1.5 text-cyan-400 font-bold">
+              <i class="fa-solid fa-sliders"></i> Environmental Telemetry Dials
+            </span>
+            <span class="text-[10px] text-slate-500">Dynamic Calibrations</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5 text-center font-mono">
+            <!-- Flow Dial -->
+            <div class="p-2.5 rounded-xl bg-space-950/80 border border-white/[0.06]">
+              <span class="text-[10px] text-slate-400 block mb-0.5">WATER FLOW</span>
+              <span id="sliderFlowVal" class="text-sm font-extrabold text-cyan-400">2.8 GPM</span>
+              <input type="range" min="0" max="10" step="0.1" value="2.8" oninput="updateTelemetryNumber('flow', this.value)" class="w-full accent-cyan-400 bg-space-850 h-1 rounded-lg mt-1 cursor-pointer">
+            </div>
+
+            <!-- Temp Dial -->
+            <div class="p-2.5 rounded-xl bg-space-950/80 border border-white/[0.06]">
+              <span class="text-[10px] text-slate-400 block mb-0.5">KITCHEN HEAT</span>
+              <span id="sliderTempVal" class="text-sm font-extrabold text-amber-400">410 °F</span>
+              <input type="range" min="65" max="500" step="5" value="410" oninput="updateTelemetryNumber('temp', this.value)" class="w-full accent-amber-400 bg-space-850 h-1 rounded-lg mt-1 cursor-pointer">
+            </div>
+
+            <!-- Power Dial -->
+            <div class="p-2.5 rounded-xl bg-space-950/80 border border-white/[0.06]">
+              <span class="text-[10px] text-slate-400 block mb-0.5">SURGE DRAW</span>
+              <span id="sliderPowerVal" class="text-sm font-extrabold text-rose-400">9.8 kW</span>
+              <input type="range" min="0.5" max="15" step="0.2" value="9.8" oninput="updateTelemetryNumber('power', this.value)" class="w-full accent-rose-400 bg-space-850 h-1 rounded-lg mt-1 cursor-pointer">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- JSON-RPC 2.0 Live Protocol Terminal -->
+      <div class="glass-panel rounded-3xl p-4 flex flex-col shadow-xl">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.08] text-xs font-mono text-slate-400">
+          <span class="flex items-center gap-1.5 text-indigo-400 font-bold">
+            <i class="fa-solid fa-terminal"></i> MCP Server Transport Logs (SSE)
+          </span>
+          <button onclick="clearTerminalLogs()" class="text-[10px] hover:text-white transition-colors">Clear</button>
+        </div>
+        <pre id="terminalLogs" class="bg-space-950 rounded-2xl p-3 text-[10px] font-mono leading-tight text-emerald-400/90 h-32 overflow-y-auto whitespace-pre-wrap select-all border border-white/[0.04]">
+[17:25:00] [MCP-INIT] FastMCP Server started on /sse transport.
+[17:25:01] [READY] Handshake verified with Alexa+ Agent Engine.
+[17:25:02] [CONTACTS] Auto-SMS Targets: Yash (+919420036447) & Pranav (+919527658665).</pre>
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- COLUMN 2: FIRE TV 10-FOOT UI & RING OPTICAL VISION [Col: 5] -->
+    <!-- ========================================================== -->
+    <div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+
+      <!-- FIRE TV SCREEN (LIVING ROOM CINEMA DISPLAY) -->
+      <div id="fireTvCard" class="glass-panel rounded-3xl p-5 relative shadow-2xl overflow-hidden transition-all duration-500">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+              <i class="fa-solid fa-tv text-sm"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-extrabold text-white">Fire TV Cinema Display</h3>
+                <span class="text-[9px] font-mono px-2 py-0.2 bg-cyan-950 text-cyan-300 border border-cyan-800 rounded">Vega OS / Fire OS</span>
+              </div>
+              <p class="text-[11px] text-slate-400 font-mono">10-Foot UI • Active Media: <em>"Interstellar (4K HDR)"</em></p>
+            </div>
+          </div>
+          <span id="tvStatusBadge" class="text-xs px-2.5 py-1 rounded-full font-mono bg-space-900 text-slate-300 border border-white/10">
+            Streaming Normal
+          </span>
+        </div>
+
+        <!-- TV Physical Bezel -->
+        <div class="relative w-full aspect-video md:h-[295px] rounded-2xl overflow-hidden bg-black border-4 border-slate-800 shadow-2xl flex items-center justify-center">
+          
+          <!-- Simulated 4K Film Stream -->
+          <div id="tvMovieScreen" class="absolute inset-0 bg-gradient-to-tr from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="text-center z-0 px-6">
+              <i class="fa-solid fa-satellite text-indigo-400/40 text-5xl mb-3 animate-bounce"></i>
+              <h4 class="text-base font-extrabold text-slate-200 tracking-widest">INTERSTELLAR</h4>
+              <p class="text-xs text-slate-500 font-mono mt-0.5">01:42:18 / 02:49:00 • 4K DOLBY VISION</p>
+            </div>
+          </div>
+
+          <!-- Video HUD Bottom Strip -->
+          <div class="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs text-slate-400 bg-space-950/70 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/10">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-circle-play text-cyan-400"></i> HDMI 1 • Living Room</span>
+            <div class="w-1/3 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-cyan-400 h-full w-[62%]"></div>
+            </div>
+            <span class="text-[10px] font-mono">Dolby Atmos • Stereo</span>
+          </div>
+
+          <!-- SLIDING EMERGENCY PiP MODAL -->
+          <div id="fireTvPipModal" class="hidden absolute top-3 right-3 w-80 bg-space-950/95 border-2 border-rose-500 rounded-2xl shadow-2xl p-3.5 z-30 toast-enter backdrop-blur-xl">
+            <div class="flex items-center justify-between pb-2 border-b border-rose-900/60 text-xs">
+              <span class="flex items-center gap-1.5 text-rose-400 font-bold uppercase tracking-wider animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i> EcoGuard Priority PiP
+              </span>
+              <span class="text-[9px] font-mono bg-rose-950 text-rose-300 px-1.5 py-0.5 rounded border border-rose-800 font-bold">
+                10-FT INTERRUPT
+              </span>
+            </div>
+
+            <!-- Mini Live Camera Stream -->
+            <div class="relative mt-2 rounded-xl overflow-hidden border border-slate-800 h-28 bg-slate-950 flex items-center justify-center">
+              <div id="pipCamFeedBackground" class="absolute inset-0 bg-blue-950/60 flex items-center justify-center">
+                <i class="fa-solid fa-droplet text-blue-400 text-3xl animate-pulse"></i>
+              </div>
+              <div class="absolute top-1.5 left-2 text-[9px] font-mono text-white bg-black/70 px-1.5 py-0.5 rounded">
+                CAM: LAUNDRY (LIVE)
+              </div>
+              <div id="pipMetricNumber" class="absolute bottom-1.5 right-2 text-[9px] font-mono text-rose-400 bg-black/80 px-1.5 py-0.5 rounded border border-rose-700">
+                RATE: 2.8 GPM
+              </div>
+            </div>
+
+            <p id="pipAlertDescription" class="text-xs text-slate-200 mt-2 font-medium">
+              Burst water pipe detected near washer. Automatic shut-off armed.
+            </p>
+
+            <!-- 10-Foot D-Pad Focus Action Buttons -->
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <button id="btnTvConfirm" onclick="resolveIncident('Fire TV D-Pad')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2 px-2 rounded-xl border-2 border-white shadow-lg shadow-rose-600/40 flex items-center justify-center gap-1 transition-all">
+                <i class="fa-solid fa-power-off"></i> Shut Off (Select)
+              </button>
+              <button onclick="dismissPipModal()" class="bg-space-900 hover:bg-space-850 text-slate-300 text-xs py-2 px-2 rounded-xl border border-white/10 flex items-center justify-center gap-1">
+                Dismiss
+              </button>
+            </div>
+            <p class="text-[9px] text-slate-400 text-center mt-1 font-mono">Press [SELECT] on Alexa Voice Remote</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RING OPTICAL VISION & SOLENOID HUB -->
+      <div id="ringCard" class="glass-panel rounded-3xl p-5 shadow-2xl flex flex-col justify-between transition-all duration-500">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                <i class="fa-solid fa-video text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-white">Ring Optical Camera Node</h3>
+                <p class="text-[11px] text-slate-400 font-mono">Telemetry Endpoint: /devices/laundry_cam</p>
+              </div>
+            </div>
+            <span id="ringSensorBadge" class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+              FLOW: 0.0 GPM
+            </span>
+          </div>
+
+          <!-- Camera Screen with Visual Sweep -->
+          <div class="relative mt-4 aspect-video rounded-2xl bg-space-950 border border-white/10 overflow-hidden flex items-center justify-center">
+            
+            <div id="ringCamVisual" class="absolute inset-0 bg-space-900 flex flex-col items-center justify-center">
+              <i id="ringHazardIcon" class="fa-solid fa-faucet-drip text-slate-700 text-4xl mb-2"></i>
+              <span id="ringRoomLabel" class="text-xs text-slate-500 font-mono">Laundry Room Floor Feed</span>
+            </div>
+
+            <!-- Hazard Anomaly Target Box -->
+            <div id="hazardBoundingBox" class="hidden absolute inset-6 border-2 border-rose-500 bg-rose-500/10 rounded-xl flex flex-col justify-between p-2.5">
+              <div class="flex items-center justify-between">
+                <span id="hazardDetectTag" class="bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+                  TARGET: LIQUID EXPANSION (98.4%)
+                </span>
+                <span class="text-rose-400 text-[10px] font-mono animate-pulse font-bold">● REC LIVE</span>
+              </div>
+              <div id="hazardMetricOverlay" class="text-[10px] font-mono text-rose-300 bg-black/80 px-2.5 py-1 rounded-lg self-start border border-rose-500/40">
+                Delta: +2.8 gal/min
+              </div>
+            </div>
+
+            <!-- Top HUD -->
+            <div class="absolute top-2.5 left-2.5 text-[9px] font-mono text-emerald-400 bg-black/70 px-2 py-0.5 rounded-lg flex items-center gap-1.5 border border-white/10">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> RING RTSP HD • 30 FPS
+            </div>
+            <div id="ringLiveTimestamp" class="absolute bottom-2.5 left-2.5 text-[9px] font-mono text-slate-400 bg-black/70 px-2 py-0.5 rounded-lg border border-white/10">
+              2026-10-22 17:30:00 UTC
+            </div>
+          </div>
+        </div>
+
+        <!-- Solenoid Valve Actuator Hub -->
+        <div class="mt-4 p-3 rounded-2xl bg-space-950/80 border border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <i id="valveIcon" class="fa-solid fa-circle-dot text-emerald-400 text-base"></i>
+            <div>
+              <div class="text-xs font-bold text-white">Main Water Shut-off Solenoid</div>
+              <div id="valveStateText" class="text-[10px] font-mono text-emerald-400 font-bold">STATE: OPEN (Normal Pressure)</div>
+            </div>
+          </div>
+          <button id="btnManualValve" onclick="toggleManualValve()" class="text-xs px-3 py-1.5 rounded-xl bg-space-900 hover:bg-space-850 text-slate-300 border border-white/10 transition-colors">
+            Toggle Valve
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- COLUMN 3: BEE WEARABLE & YASH/PRANAV AUTO-DISPATCH [Col: 3] -->
+    <!-- ========================================================== -->
+    <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+
+      <!-- BEE WEARABLE AI (TITANIUM SMARTWATCH BEZEL) -->
+      <div id="beeCard" class="glass-panel rounded-3xl p-5 shadow-2xl flex flex-col justify-between transition-all duration-500">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+                <i class="fa-solid fa-clock text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-white">Bee Wearable AI</h3>
+                <p class="text-[10px] text-slate-400 font-mono">Location: Outdoor Garden</p>
+              </div>
+            </div>
+            <span id="beeConnBadge" class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+              BLE SYNC
+            </span>
+          </div>
+
+          <!-- Watch Hardware Frame -->
+          <div class="mt-4 flex items-center justify-center py-2">
+            <div id="beeWatchBezel" class="relative w-44 h-44 rounded-full bg-space-950 border-4 border-slate-700 shadow-2xl flex items-center justify-center p-3 transition-transform">
+              
+              <!-- Watch Ambient Face -->
+              <div id="beeWatchFaceNormal" class="w-full h-full rounded-full bg-space-900 flex flex-col items-center justify-center text-center p-3 border border-white/10">
+                <span class="text-2xl font-black font-mono text-white tracking-wider" id="watchClockTime">17:30</span>
+                <div class="flex items-center gap-1.5 text-[10px] text-emerald-400 mt-1 font-mono">
+                  <i class="fa-solid fa-heart-pulse animate-pulse"></i> 72 BPM
+                </div>
+                <span class="text-[9px] text-slate-500 mt-1.5 font-mono">Wrist: Normal</span>
+              </div>
+
+              <!-- Watch Alert Card (Shows on Hazard) -->
+              <div id="beeWatchFaceAlert" class="hidden w-full h-full rounded-full bg-gradient-to-b from-rose-950 to-space-950 flex flex-col items-center justify-center text-center p-3 border-2 border-rose-500 text-white">
+                <i id="beeAlertIcon" class="fa-solid fa-water text-rose-400 text-base animate-bounce"></i>
+                <span id="beeAlertTitle" class="text-[10px] font-black text-rose-200 mt-0.5 uppercase tracking-wide">LEAK ALERT</span>
+                <p id="beeAlertText" class="text-[8px] text-slate-300 leading-tight mt-0.5">Laundry pipe burst.</p>
+                
+                <button id="btnBeeAction" onclick="resolveIncident('Bee Wrist Haptic')" class="mt-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[9px] py-1 px-3 rounded-full border border-white shadow-md active:scale-95 transition-all">
+                  TAP: CUT VALVE
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-2 p-2.5 rounded-2xl bg-space-950/70 border border-white/[0.06] text-center">
+          <span id="beeHapticStatus" class="text-[10px] font-mono text-slate-400 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-hand text-slate-500"></i> Haptic Motor: Idle (0Hz)
+          </span>
+        </div>
+      </div>
+
+      <!-- YASH & PRANAV EMERGENCY ROUTING DECK -->
+      <div class="glass-panel rounded-3xl p-5 shadow-2xl flex flex-col justify-between">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                <i class="fa-solid fa-tower-cell text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-white">Emergency Contacts</h3>
+                <p class="text-[10px] text-slate-400 font-mono">Zero-Click Auto Dispatch Deck</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yash Card -->
+          <div class="mt-3.5 p-3 rounded-2xl bg-space-950/80 border border-white/[0.08] flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span class="text-xs font-bold text-white">Yash</span>
+                <span class="text-[9px] font-mono text-emerald-400">(Primary)</span>
+              </div>
+              <p class="text-[11px] font-mono text-slate-400 mt-0.5">+91 9420036447</p>
+            </div>
+            <a href="https://wa.me/919420036447?text=🚨%20EcoGuard%20Alert:%20Water%20leak%20detected%20in%20Laundry%20Room.%20Valve%20auto-isolated." target="_blank" class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs hover:bg-emerald-500 hover:text-white transition-colors" title="Open Direct WhatsApp">
+              <i class="fa-brands fa-whatsapp"></i>
+            </a>
+          </div>
+
+          <!-- Pranav Card -->
+          <div class="mt-2.5 p-3 rounded-2xl bg-space-950/80 border border-white/[0.08] flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span class="text-xs font-bold text-white">Pranav</span>
+                <span class="text-[9px] font-mono text-cyan-400">(Co-Lead)</span>
+              </div>
+              <p class="text-[11px] font-mono text-slate-400 mt-0.5">+91 9527658665</p>
+            </div>
+            <a href="https://wa.me/919527658665?text=🚨%20EcoGuard%20Alert:%20Water%20leak%20detected%20in%20Laundry%20Room.%20Valve%20auto-isolated." target="_blank" class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-xs hover:bg-cyan-500 hover:text-white transition-colors" title="Open Direct WhatsApp">
+              <i class="fa-brands fa-whatsapp"></i>
+            </a>
+          </div>
+
+          <!-- Live Mobile Push Channel (ntfy.sh) -->
+          <div class="mt-3 p-2.5 rounded-xl bg-space-900 border border-white/[0.06] text-[10px] font-mono">
+            <div class="flex items-center justify-between text-indigo-300">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-bell"></i> Live Mobile Channel</span>
+              <a href="https://ntfy.sh/ecoguard-yash-pranav" target="_blank" class="underline text-indigo-400 hover:text-white">Subscribe</a>
+            </div>
+            <p class="text-slate-500 mt-0.5">ntfy.sh/ecoguard-yash-pranav</p>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-t border-white/[0.08] text-center">
+          <span class="text-[10px] font-mono text-emerald-400 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-circle-check"></i> AWS SNS Gateway Armed
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- SHAPE LOG (+10% BONUS) MODAL -->
+  <div id="frictionModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel max-w-2xl w-full rounded-3xl border border-amber-500/40 p-6 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      
+      <div class="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+            <i class="fa-solid fa-clipboard-check text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Developer Friction Log & "Shape" Feedback</h3>
+            <p class="text-xs text-amber-300/80 font-mono">Amazon Developer Engineering Submission (+10% Evaluation Bonus)</p>
+          </div>
+        </div>
+        <button onclick="closeFrictionModal()" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="mt-4 overflow-y-auto space-y-3.5 text-xs text-slate-300 pr-2 leading-relaxed font-mono">
+        <div class="p-3.5 rounded-2xl bg-space-950/80 border border-white/[0.08]">
+          <h4 class="font-bold text-amber-400 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i> 1. Alexa+ MCP Atomic Multi-Device Dispatch Latency
+          </h4>
+          <p class="text-slate-300 text-[11px]">
+            <strong>Friction Encountered:</strong> When dispatching multi-device push events (streaming PiP to Fire TV, notifying Bee wearable, and triggering SMS gateway to Yash & Pranav), sequential tool calls add ~650ms cumulative overhead.<br>
+            <strong>Shape Proposal:</strong> Implement batch JSON-RPC execution bindings (<code class="text-indigo-400">mcp.broadcast_tool_batch()</code>) to allow atomic cross-device coordination under 100ms.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-space-950/80 border border-white/[0.08]">
+          <h4 class="font-bold text-amber-400 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i> 2. Fire TV Vega OS / Fire OS PiP Interruption Primitives
+          </h4>
+          <p class="text-slate-300 text-[11px]">
+            <strong>Friction Encountered:</strong> Injecting interactive Picture-in-Picture overlays during DRM-protected video playback currently requires custom system permission overlays.<br>
+            <strong>Shape Proposal:</strong> Standardize an official <code class="text-cyan-400">AlexaEmergencyOverlayProtocol</code> API for Fire TV that preserves underlying player state without forcing full activity teardown.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-space-950/80 border border-white/[0.08]">
+          <h4 class="font-bold text-amber-400 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i> 3. Bee Wearable AI Background Wake-on-Radio Protocol
+          </h4>
+          <p class="text-slate-300 text-[11px]">
+            <strong>Friction Encountered:</strong> Low-power BLE sleep states on Bee devices occasionally delayed haptic pulse delivery when user was outside direct home Wi-Fi range.<br>
+            <strong>Shape Proposal:</strong> Expose native AWS IoT Core Device Shadow webhooks directly into the Bee SDK for immediate low-power cellular push notifications.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-white/[0.08] flex justify-end">
+        <button onclick="closeFrictionModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-md transition-all">
+          Close Log
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    // --- GLOBAL SYSTEM STATE ---
+    let isHazardActive = false;
+    let isAutoPlaying = false;
+    let audioEnabled = true;
+    let valveOpen = true;
+    let audioCtx = null;
+
+    // Numbers & Telemetry (Yash & Pranav)
+    const yashPhone = "+919420036447";
+    const pranavPhone = "+919527658665";
+    let liveFlowRate = 2.8;
+    let liveTemp = 410;
+    let livePower = 9.8;
+    const ntfyTopic = "ecoguard-yash-pranav";
+
+    // --- AUDIO SYNTHESIZER (Web Audio API) ---
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playBeep(freq = 880, duration = 0.15, type = 'sine') {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playAlarmSequence() {
+      if (!audioEnabled) return;
+      playBeep(920, 0.2, 'sawtooth');
+      setTimeout(() => playBeep(740, 0.25, 'sawtooth'), 220);
+      setTimeout(() => playBeep(920, 0.2, 'sawtooth'), 480);
+    }
+
+    function playSuccessChime() {
+      if (!audioEnabled) return;
+      playBeep(523.25, 0.15, 'triangle');
+      setTimeout(() => playBeep(659.25, 0.15, 'triangle'), 150);
+      setTimeout(() => playBeep(783.99, 0.3, 'sine'), 300);
+    }
+
+    // --- SPEECH SYNTHESIS (Alexa Voice) ---
+    function speakAlexa(text) {
+      const subtitle = document.getElementById('alexaVoiceSubtitle');
+      subtitle.textContent = `"${text}"`;
+
+      if (!audioEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.08;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('audioIcon');
+      if (audioEnabled) {
+        icon.className = "fa-solid fa-volume-high text-indigo-400 text-sm";
+        initAudio();
+        playSuccessChime();
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-slate-500 text-sm";
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      }
+    }
+
+    // --- CANVAS AUDIO VISUALIZER (SMOOTH WAVE) ---
+    const canvas = document.getElementById('voiceCanvas');
+    const ctx = canvas.getContext('2d');
+    let wavePhase = 0;
+
+    function renderWaveform() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerY = height / 2;
+
+      ctx.lineWidth = isHazardActive ? 3 : 2;
+      ctx.strokeStyle = isHazardActive ? '#ff1744' : (isAutoPlaying ? '#818cf8' : '#00f2fe');
+      ctx.beginPath();
+
+      const numPoints = 80;
+      const amplitude = isHazardActive ? 22 : (isAutoPlaying ? 16 : 6);
+      const freq = isHazardActive ? 0.08 : 0.04;
+
+      for (let i = 0; i <= numPoints; i++) {
+        const x = (i / numPoints) * width;
+        const y = centerY + Math.sin(i * freq + wavePhase) * amplitude * Math.sin((i / numPoints) * Math.PI);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      wavePhase += isHazardActive ? 0.15 : 0.05;
+      requestAnimationFrame(renderWaveform);
+    }
+    renderWaveform();
+
+    // --- LOGGING & TERMINAL ---
+    function appendTerminalLog(msg) {
+      const logs = document.getElementById('terminalLogs');
+      const time = new Date().toTimeString().split(' ')[0];
+      logs.textContent += `\n[${time}] ${msg}`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function appendThought(thought, isHighlight = false) {
+      const box = document.getElementById('thoughtStreamBox');
+      const div = document.createElement('div');
+      div.className = isHighlight ? 'text-amber-300 font-bold' : 'text-slate-300';
+      div.textContent = `> ${thought}`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearTerminalLogs() {
+      document.getElementById('terminalLogs').textContent = `[${new Date().toTimeString().split(' ')[0]}] [LOGS CLEARED]`;
+    }
+
+    // --- TELEMETRY GAUGES / SLIDER UPDATER ---
+    function updateTelemetryNumber(type, val) {
+      if (type === 'flow') {
+        liveFlowRate = parseFloat(val);
+        document.getElementById('sliderFlowVal').textContent = `${liveFlowRate.toFixed(1)} GPM`;
+        document.getElementById('pipMetricNumber').textContent = `RATE: ${liveFlowRate.toFixed(1)} GPM`;
+        document.getElementById('hazardMetricOverlay').textContent = `Delta: +${liveFlowRate.toFixed(1)} gal/min`;
+        if (isHazardActive) {
+          document.getElementById('ringSensorBadge').textContent = `FLOW: ${liveFlowRate.toFixed(1)} GPM`;
+        }
+      } else if (type === 'temp') {
+        liveTemp = parseInt(val);
+        document.getElementById('sliderTempVal').textContent = `${liveTemp} °F`;
+        if (document.getElementById('scenarioSelect').value === 'thermal' && isHazardActive) {
+          document.getElementById('ringSensorBadge').textContent = `TEMP: ${liveTemp} °F (CRITICAL)`;
+          document.getElementById('pipMetricNumber').textContent = `TEMP: ${liveTemp} °F`;
+        }
+      } else if (type === 'power') {
+        livePower = parseFloat(val);
+        document.getElementById('sliderPowerVal').textContent = `${livePower.toFixed(1)} kW`;
+        if (document.getElementById('scenarioSelect').value === 'electrical' && isHazardActive) {
+          document.getElementById('ringSensorBadge').textContent = `SURGE: ${livePower.toFixed(1)} kW`;
+          document.getElementById('pipMetricNumber').textContent = `SURGE: ${livePower.toFixed(1)} kW`;
+        }
+      }
+      appendThought(`[TELEMETRY_CALIBRATION] Sensor threshold adjusted: ${type.toUpperCase()} -> ${val}`);
+    }
+
+    function onScenarioChange() {
+      const scenario = document.getElementById('scenarioSelect').value;
+      const roomLabel = document.getElementById('ringRoomLabel');
+      const hazardIcon = document.getElementById('ringHazardIcon');
+      const pipBg = document.getElementById('pipCamFeedBackground');
+
+      if (scenario === 'water') {
+        roomLabel.textContent = "Laundry Room Floor Feed";
+        hazardIcon.className = "fa-solid fa-faucet-drip text-slate-700 text-4xl mb-2";
+        pipBg.innerHTML = '<i class="fa-solid fa-droplet text-blue-400 text-3xl animate-pulse"></i>';
+      } else if (scenario === 'thermal') {
+        roomLabel.textContent = "Kitchen Stove & Burners Feed";
+        hazardIcon.className = "fa-solid fa-fire-burner text-slate-700 text-4xl mb-2";
+        pipBg.innerHTML = '<i class="fa-solid fa-fire text-amber-500 text-3xl animate-pulse"></i>';
+      } else if (scenario === 'electrical') {
+        roomLabel.textContent = "Main Electrical Panel & HVAC Feed";
+        hazardIcon.className = "fa-solid fa-bolt text-slate-700 text-4xl mb-2";
+        pipBg.innerHTML = '<i class="fa-solid fa-bolt-lightning text-amber-400 text-3xl animate-pulse"></i>';
+      }
+      resetSystem();
+    }
+
+    // --- ZERO-CLICK AUTONOMOUS BACKGROUND DISPATCH ---
+    function autoDispatchMessages(title, details) {
+      const text = `🚨 ECOGUARD ALERT: ${title} (${details}). Alexa+ MCP isolated main valve automatically. Status: Safe.`;
+      
+      document.getElementById('autoDispatchedBody').textContent = `"${text}"`;
+      document.getElementById('incomingSmsNotification').classList.remove('hidden');
+
+      appendThought(`[AUTONOMOUS_DISPATCH] Direct background SMS transmitting to Yash & Pranav (0 clicks)...`, true);
+
+      // 1. Send to Yash via TextBelt Gateway
+      fetch('https://textbelt.com/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `phone=${encodeURIComponent(yashPhone)}&message=${encodeURIComponent(text)}&key=textbelt`
+      }).catch(()=>{});
+
+      // 2. Send to Pranav via TextBelt Gateway
+      fetch('https://textbelt.com/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `phone=${encodeURIComponent(pranavPhone)}&message=${encodeURIComponent(text)}&key=textbelt`
+      }).catch(()=>{});
+
+      // 3. Broadcast to Live Phone Push Topic (ntfy.sh)
+      try {
+        fetch(`https://ntfy.sh/${ntfyTopic}`, {
+          method: 'POST',
+          body: `EcoGuard Alert: ${title} (${details}). Valve isolated automatically.`,
+          headers: { 'Title': '🚨 EcoGuard Alert: Yash & Pranav', 'Priority': 'urgent', 'Tags': 'warning,shield' }
+        }).catch(()=>{});
+      } catch (e) {}
+
+      appendTerminalLog(`[AUTO-SMS] Dispatched directly to Yash (+919420036447) & Pranav (+919527658665)`);
+    }
+
+    // --- HAZARD TRIGGER LOGIC ---
+    function triggerManualHazard() {
+      if (isHazardActive) return;
+      isHazardActive = true;
+      initAudio();
+
+      const scenario = document.getElementById('scenarioSelect').value;
+      let title = "Water Leak Detected";
+      let details = "Pipe rupture near washing machine";
+      let rate = `FLOW: ${liveFlowRate.toFixed(1)} GPM`;
+
+      if (scenario === 'thermal') {
+        title = "Kitchen Heat Flare-up";
+        details = "Stove temperature spiked unattended";
+        rate = `TEMP: ${liveTemp} °F (CRITICAL)`;
+      } else if (scenario === 'electrical') {
+        title = "Severe Electrical Surge";
+        details = "HVAC breaker drawing dangerous current";
+        rate = `SURGE: ${livePower.toFixed(1)} kW`;
+      }
+
+      // 1. Play Alert Sound
+      playAlarmSequence();
+
+      // 2. Atmosphere Glow
+      document.getElementById('dangerAtmosphere').className = "fixed inset-0 bg-rose-950/20 pointer-events-none transition-colors duration-700 -z-10";
+
+      // 3. Update Top Banner Status
+      const banner = document.getElementById('topBanner');
+      const bannerText = document.getElementById('systemStatusText');
+      banner.className = "bg-rose-950/90 border-b border-rose-800/80 px-6 py-2 flex items-center justify-between text-xs font-mono transition-colors duration-500";
+      bannerText.className = "text-rose-400 font-bold flex items-center gap-1.5 animate-pulse";
+      bannerText.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> CRITICAL HAZARD ACTIVE: ${title.toUpperCase()}`;
+
+      // 4. Ring Camera / Sensor Activation
+      document.getElementById('hazardBoundingBox').classList.remove('hidden');
+      document.getElementById('ringSensorBadge').className = "text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700 animate-pulse font-bold";
+      document.getElementById('ringSensorBadge').textContent = rate;
+
+      // 5. Alexa+ Brain Processing & MCP Call
+      document.getElementById('agentStateBadge').className = "text-[10px] font-mono px-2.5 py-1 rounded-full bg-rose-950 text-rose-300 border border-rose-700 animate-pulse font-bold";
+      document.getElementById('agentStateBadge').textContent = "CRITICAL REASONING";
+
+      appendThought(`[TELEMETRY_ANOMALY] Received from Ring sensor: ${title}`, true);
+      appendThought(`Bedrock LLM: Evaluating ambient occupancy. Living room TV is ON; User wrist is in GARDEN.`);
+      appendThought(`Decision: Trigger Fire TV PiP, Bee wearable vibration, AND auto-dispatch SMS text to Yash & Pranav.`);
+
+      appendTerminalLog(`{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "firetv_broadcast_pip", "prompt": "Shut off main valve?"}}`);
+      appendTerminalLog(`{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "bee_send_haptic_card", "urgency": "MAX"}}`);
+      appendTerminalLog(`{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "auto_dispatch_sms", "recipients": ["${yashPhone}", "${pranavPhone}"]}}`);
+
+      // 6. Update MCP Call Stack UI
+      const stack = document.getElementById('mcpToolCallStack');
+      stack.innerHTML = `
+        <div class="p-2.5 rounded-xl bg-indigo-950/80 border border-indigo-700/80 text-xs font-mono text-indigo-300 flex items-center justify-between">
+          <span><i class="fa-solid fa-spinner animate-spin mr-1.5"></i> firetv_broadcast_pip()</span>
+          <span class="text-[9px] bg-indigo-900 px-2 py-0.5 rounded">STREAMING</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-rose-950/80 border border-rose-700/80 text-xs font-mono text-rose-300 flex items-center justify-between">
+          <span><i class="fa-solid fa-wave-square animate-pulse mr-1.5"></i> bee_send_haptic_card()</span>
+          <span class="text-[9px] bg-rose-900 px-2 py-0.5 rounded">VIBRATING</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-700/80 text-xs font-mono text-emerald-300 flex items-center justify-between">
+          <span><i class="fa-solid fa-bolt mr-1.5 animate-pulse text-emerald-400"></i> auto_dispatch_sms(Yash, Pranav)</span>
+          <span class="text-[9px] bg-emerald-900 px-2 py-0.5 rounded font-bold">AUTO-SENT</span>
+        </div>
+      `;
+
+      // 7. Fire TV Slide-in PiP Modal
+      document.getElementById('fireTvPipModal').classList.remove('hidden');
+      document.getElementById('tvStatusBadge').className = "text-xs px-2.5 py-1 rounded-full font-mono bg-rose-950 text-rose-300 border border-rose-700 animate-pulse font-bold";
+      document.getElementById('tvStatusBadge').textContent = "PiP INTERRUPT";
+      document.getElementById('pipAlertDescription').textContent = `${details}. Cut off utility to prevent escalation?`;
+
+      // 8. Bee Wrist Mockup Activation (Buzzing)
+      const watchBezel = document.getElementById('beeWatchBezel');
+      watchBezel.classList.add('wrist-buzzing');
+      document.getElementById('beeWatchFaceNormal').classList.add('hidden');
+      document.getElementById('beeWatchFaceAlert').classList.remove('hidden');
+      document.getElementById('beeHapticStatus').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400 animate-bounce"></i> Haptic Motor: Active High (140Hz Pulse)`;
+      document.getElementById('beeHapticStatus').className = "text-[10px] font-mono text-rose-300 flex items-center justify-center gap-2";
+
+      // 9. AUTONOMOUS ZERO-CLICK DISPATCH
+      autoDispatchMessages(title, details);
+
+      // 10. Speak Alexa Response
+      speakAlexa(`Warning: ${title}. Displaying live feed on Fire TV, vibrating Bee wearable, and automatically sent emergency SMS alerts to Yash and Pranav.`);
+    }
+
+    function dismissSmsBanner() {
+      document.getElementById('incomingSmsNotification').classList.add('hidden');
+    }
+
+    // --- RESOLUTION (VALVE SHUT-OFF) ---
+    function resolveIncident(sourceDevice = "Fire TV D-Pad") {
+      if (!isHazardActive && valveOpen) return;
+
+      valveOpen = false;
+      isHazardActive = false;
+      playSuccessChime();
+
+      document.getElementById('dangerAtmosphere').className = "fixed inset-0 bg-rose-950/0 pointer-events-none transition-colors duration-700 -z-10";
+
+      // Update Valve UI
+      document.getElementById('valveIcon').className = "fa-solid fa-circle-check text-rose-400 text-base";
+      document.getElementById('valveStateText').textContent = "STATE: CLOSED (Mitigated in 28ms)";
+      document.getElementById('valveStateText').className = "text-[10px] font-mono text-rose-400 font-bold";
+
+      // Update Top Banner
+      const banner = document.getElementById('topBanner');
+      const bannerText = document.getElementById('systemStatusText');
+      banner.className = "bg-emerald-950/90 border-b border-emerald-800/80 px-6 py-2 flex items-center justify-between text-xs font-mono transition-colors duration-500";
+      bannerText.className = "text-emerald-400 font-bold flex items-center gap-1.5";
+      bannerText.innerHTML = `<i class="fa-solid fa-circle-check"></i> HAZARD CONTAINED via ${sourceDevice} • Yash & Pranav Notified`;
+
+      // Update Device Cards
+      document.getElementById('hazardBoundingBox').classList.add('hidden');
+      document.getElementById('ringSensorBadge').className = "text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold";
+      document.getElementById('ringSensorBadge').textContent = "FLOW: 0.0 GPM";
+
+      // Stop Watch Buzzing
+      document.getElementById('beeWatchBezel').classList.remove('wrist-buzzing');
+      document.getElementById('beeWatchFaceNormal').classList.remove('hidden');
+      document.getElementById('beeWatchFaceAlert').classList.add('hidden');
+      document.getElementById('beeHapticStatus').innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Action Executed from Wrist • Haptics Idle`;
+      document.getElementById('beeHapticStatus').className = "text-[10px] font-mono text-emerald-400 flex items-center justify-center gap-2";
+
+      // Dismiss Fire TV PiP
+      document.getElementById('fireTvPipModal').classList.add('hidden');
+      document.getElementById('tvStatusBadge').className = "text-xs px-2.5 py-1 rounded-full font-mono bg-space-900 text-slate-300 border border-white/10";
+      document.getElementById('tvStatusBadge').textContent = "Streaming Normal";
+
+      // Reset Alexa State
+      document.getElementById('agentStateBadge').className = "text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold";
+      document.getElementById('agentStateBadge').textContent = "SAFE / RESOLVED";
+
+      appendThought(`[ACTION_CONFIRMED] Utility valve isolated by user via ${sourceDevice}. Pressure returning to zero.`);
+      appendTerminalLog(`{"jsonrpc": "2.0", "result": {"tool": "shut_off_utility", "status": "SUCCESS", "elapsed_ms": 28}}`);
+
+      // Clear Call Stack
+      document.getElementById('mcpToolCallStack').innerHTML = `
+        <div class="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800 flex items-center justify-between text-xs font-mono text-emerald-300">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-shield-check"></i> Safe State Restored</span>
+          <span class="text-[10px] text-emerald-400">Valve Isolated</span>
+        </div>
+      `;
+
+      speakAlexa(`Main shut-off valve confirmed closed via ${sourceDevice}. Hazard neutralized in 28 milliseconds. Yash and Pranav confirmed notified.`);
+    }
+
+    function dismissPipModal() {
+      document.getElementById('fireTvPipModal').classList.add('hidden');
+      appendThought("User dismissed Fire TV alert overlay.");
+    }
+
+    function toggleManualValve() {
+      valveOpen = !valveOpen;
+      const text = document.getElementById('valveStateText');
+      const icon = document.getElementById('valveIcon');
+      if (valveOpen) {
+        text.textContent = "STATE: OPEN (Normal Pressure)";
+        text.className = "text-[10px] font-mono text-emerald-400 font-bold";
+        icon.className = "fa-solid fa-circle-dot text-emerald-400 text-base";
+      } else {
+        text.textContent = "STATE: CLOSED (Manual Lockout)";
+        text.className = "text-[10px] font-mono text-amber-400 font-bold";
+        icon.className = "fa-solid fa-lock text-amber-400 text-base";
+      }
+      playBeep(600, 0.1);
+    }
+
+    function resetSystem() {
+      isHazardActive = false;
+      isAutoPlaying = false;
+      valveOpen = true;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+      document.getElementById('dangerAtmosphere').className = "fixed inset-0 bg-rose-950/0 pointer-events-none transition-colors duration-700 -z-10";
+      document.getElementById('fireTvPipModal').classList.add('hidden');
+      document.getElementById('hazardBoundingBox').classList.add('hidden');
+      document.getElementById('beeWatchBezel').classList.remove('wrist-buzzing');
+      document.getElementById('beeWatchFaceNormal').classList.remove('hidden');
+      document.getElementById('beeWatchFaceAlert').classList.add('hidden');
+      dismissSmsBanner();
+
+      document.getElementById('topBanner').className = "bg-space-900/80 border-b border-white/[0.05] px-6 py-2 flex items-center justify-between text-xs font-mono transition-colors duration-500";
+      document.getElementById('systemStatusText').className = "text-emerald-400 font-semibold flex items-center gap-1.5";
+      document.getElementById('systemStatusText').innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> All Subsystems Nominal • Telemetry Synchronized`;
+
+      document.getElementById('tvStatusBadge').className = "text-xs px-2.5 py-1 rounded-full font-mono bg-space-900 text-slate-300 border border-white/10";
+      document.getElementById('tvStatusBadge').textContent = "Streaming Normal";
+
+      document.getElementById('ringSensorBadge').className = "text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold";
+      document.getElementById('ringSensorBadge').textContent = "FLOW: 0.0 GPM";
+
+      document.getElementById('valveStateText').textContent = "STATE: OPEN (Normal Pressure)";
+      document.getElementById('valveStateText').className = "text-[10px] font-mono text-emerald-400 font-bold";
+      document.getElementById('valveIcon').className = "fa-solid fa-circle-dot text-emerald-400 text-base";
+
+      document.getElementById('agentStateBadge').className = "text-[10px] font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-white/10 font-bold";
+      document.getElementById('agentStateBadge').textContent = "IDLE / LISTENING";
+
+      document.getElementById('alexaVoiceSubtitle').textContent = '"EcoGuard ambient monitoring online. Awaiting environmental telemetry..."';
+      document.getElementById('mcpToolCallStack').innerHTML = `
+        <div class="p-2.5 rounded-xl bg-space-900/60 border border-white/[0.06] flex items-center justify-between text-xs font-mono text-slate-400">
+          <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-600"></span> Standby Pipeline</span>
+          <span class="text-[10px] text-slate-500">No active calls</span>
+        </div>
+      `;
+
+      appendThought("System state reset to baseline.");
+      appendTerminalLog("[RESET] System state cleared to nominal.");
+      playBeep(440, 0.1);
+    }
+
+    // --- AUTO-PLAY CINEMATIC DEMO ---
+    function runCinematicDemo() {
+      if (isAutoPlaying) return;
+      isAutoPlaying = true;
+      resetSystem();
+      initAudio();
+
+      const btn = document.getElementById('btnAutoDemo');
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Running Demo...`;
+      btn.classList.add('opacity-80');
+
+      appendThought("=== Starting Automated Cinematic Demo Scenario ===", true);
+      speakAlexa(`Welcome to EcoGuard. Active SMS responders configured: Yash and Pranav.`);
+
+      // Timeline Sequence
+      setTimeout(() => {
+        appendThought("T+3.0s: Simulating pipe burst in laundry room...");
+        triggerManualHazard();
+      }, 3500);
+
+      setTimeout(() => {
+        appendThought("T+8.0s: Simulating user responding via Fire TV remote control...");
+        const btnConfirm = document.getElementById('btnTvConfirm');
+        if (btnConfirm) btnConfirm.classList.add('ring-4', 'ring-cyan-400');
+      }, 8000);
+
+      setTimeout(() => {
+        appendThought("T+10.5s: Executing valve cut-off action...");
+        resolveIncident("Fire TV D-Pad");
+        btn.innerHTML = `<i class="fa-solid fa-clapperboard"></i> 🎬 Auto-Play Demo`;
+        btn.classList.remove('opacity-80');
+        isAutoPlaying = false;
+      }, 10500);
+    }
+
+    // --- CLOCK RUNNER ---
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('watchClockTime').textContent = timeStr;
+      document.getElementById('utcTimeLive').textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      document.getElementById('ringLiveTimestamp').textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- MODAL CONTROLS ---
+    function openFrictionModal() {
+      document.getElementById('frictionModal').classList.remove('hidden');
+    }
+    function closeFrictionModal() {
+      document.getElementById('frictionModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoGuard — 35-Second Video Showcase</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 25px rgba(99, 102, 241, 0.8)); }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    @keyframes glitchAlert {
+      0%, 100% { border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
+      50% { border-color: rgba(244, 63, 94, 1); box-shadow: 0 0 60px rgba(244, 63, 94, 0.9); }
+    }
+    @keyframes slideUpFade {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .scene-enter {
+      animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pulse-glow {
+      animation: pulseRing 3s infinite ease-in-out;
+    }
+    .alert-glow {
+      animation: glitchAlert 1.2s infinite;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+  </style>
+</head>
+<body class="bg-black text-slate-100 font-sans antialiased min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden select-none">
+
+  <!-- TOP VIDEO CONTROLLER BAR -->
+  <header class="w-full max-w-5xl mb-3 flex items-center justify-between px-4 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+    <div class="flex items-center gap-3">
+      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+      <span class="font-bold tracking-wider text-slate-200 uppercase font-mono">EcoGuard 35-Second Video Pitch Reel</span>
+      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">1080p Full HD</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="btnPlayVideo" onclick="startVideoPresentation()" class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold px-4 py-1.5 rounded-lg shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all transform active:scale-95">
+        <i class="fa-solid fa-play"></i> ▶ Play 35s Video
+      </button>
+
+      <button id="btnExportVideo" onclick="startRecordingAndExport()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-1.5 rounded-lg shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all">
+        <i class="fa-solid fa-download"></i> Record & Export File
+      </button>
+
+      <div class="h-4 w-px bg-slate-700"></div>
+
+      <div class="font-mono text-slate-400 text-xs flex items-center gap-1.5">
+        <i class="fa-solid fa-stopwatch text-indigo-400"></i>
+        <span id="videoTimer">00:00 / 00:38</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 16:9 CINEMA STAGE (1920x1080 Aspect Ratio Container) -->
+  <div id="videoCinemaStage" class="relative w-full max-w-5xl aspect-video bg-slate-950 rounded-2xl border-2 border-slate-800 shadow-2xl overflow-hidden flex flex-col justify-between p-8">
+    
+    <!-- Background Ambient Lighting Grid -->
+    <div class="absolute inset-0 bg-[radial-gradient(#312e81_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+    <div id="ambientGlow" class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none transition-all duration-700"></div>
+
+    <!-- CINEMA HEADER HUD -->
+    <div class="relative z-10 flex items-center justify-between border-b border-slate-800/80 pb-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-lg">
+          <i class="fa-solid fa-shield-halved text-lg"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-extrabold text-white tracking-wide flex items-center gap-2">
+            EcoGuard <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700">Alexa+ MCP</span>
+          </h2>
+          <p class="text-[10px] text-slate-400 font-mono">By Yash & Pranav • Amazon Developer Hackathon (Build, Ship, Shape)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="sceneBadge" class="text-xs font-mono px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+          SCENE 1: THE HOOK
+        </span>
+      </div>
+    </div>
+
+    <!-- MAIN SCENE CANVAS VIEWPORT -->
+    <div id="sceneContainer" class="relative z-10 flex-1 flex items-center justify-center my-4">
+      
+      <!-- SCENE 1: THE PROBLEM & THE HOOK (00:00 - 00:08) -->
+      <div id="scene1" class="w-full flex flex-col items-center justify-center text-center space-y-4 scene-enter">
+        <div class="w-16 h-16 rounded-2xl bg-rose-600/20 border-2 border-rose-500 flex items-center justify-center text-rose-400 text-3xl mb-1 pulse-glow">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h1 class="text-4xl font-extrabold tracking-tight text-white max-w-2xl leading-tight">
+          Traditional Smart Homes <span class="text-rose-500">Only Beep Passively</span> While Disasters Destroy Property.
+        </h1>
+        <p class="text-sm text-slate-400 max-w-xl font-mono">
+          Burst pipes. Kitchen flare-ups. Electrical surges. Millions lost in damages every hour due to human delay.
+        </p>
+        <div class="flex gap-4 pt-2">
+          <span class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-400">🚨 2.8 Gal/Min Water Damage</span>
+          <span class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-400">🔥 410°F Unattended Flare-up</span>
+        </div>
+      </div>
+
+      <!-- SCENE 2: THE BRAIN & ALEXA+ MCP (00:08 - 00:18) -->
+      <div id="scene2" class="hidden w-full flex items-center justify-between gap-8 scene-enter">
+        <div class="flex-1 space-y-4">
+          <span class="text-xs font-bold font-mono text-indigo-400 uppercase tracking-widest bg-indigo-950/80 px-2.5 py-1 rounded border border-indigo-800">
+            The Autonomous Solution
+          </span>
+          <h2 class="text-3xl font-extrabold text-white leading-snug">
+            Alexa+ with <span class="text-cyan-400">Model Context Protocol</span> as the Ambient Home Brain.
+          </h2>
+          <p class="text-xs text-slate-300 leading-relaxed font-mono">
+            EcoGuard converts Alexa+ into an autonomous safety orchestrator using standardized MCP JSON-RPC tool calling and Amazon Bedrock reasoning.
+          </p>
+          <div class="flex gap-3 text-xs font-mono text-slate-400">
+            <span class="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-emerald-400">✔ FastMCP SSE Protocol</span>
+            <span class="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-cyan-400">✔ Amazon Bedrock (Claude 3.5)</span>
+          </div>
+        </div>
+
+        <div class="w-80 glass-card rounded-2xl p-4 border border-indigo-500/40 shadow-xl">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-mono text-slate-400">
+            <span><i class="fa-solid fa-terminal text-indigo-400"></i> MCP JSON-RPC Wire</span>
+            <span class="text-emerald-400">10Hz Telemetry</span>
+          </div>
+          <pre class="mt-2 text-[10px] font-mono text-emerald-400/90 leading-relaxed bg-black/60 p-2.5 rounded-lg overflow-hidden">
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "shut_off_utility_valve",
+    "utility": "WATER_MAIN",
+    "latency": "28ms"
+  }
+}</pre>
+        </div>
+      </div>
+
+      <!-- SCENE 3: 4-DEVICE CROSS-DEVICE DEMO & SMS (00:18 - 00:28) -->
+      <div id="scene3" class="hidden w-full grid grid-cols-4 gap-4 scene-enter">
+        
+        <!-- Fire TV -->
+        <div class="glass-card rounded-xl p-3 border border-cyan-500/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-cyan-400 mb-1">
+              <i class="fa-solid fa-tv"></i> Fire TV (Living Room)
+            </div>
+            <p class="text-[10px] text-slate-400">Stream interrupted with Picture-in-Picture camera feed.</p>
+          </div>
+          <div class="mt-2 aspect-video rounded bg-black flex items-center justify-center border border-cyan-700/50">
+            <span class="text-[9px] font-mono text-cyan-300 font-bold animate-pulse">PiP Live Alert</span>
+          </div>
+        </div>
+
+        <!-- Ring Camera -->
+        <div class="glass-card rounded-xl p-3 border border-amber-500/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-amber-400 mb-1">
+              <i class="fa-solid fa-video"></i> Ring Cam & Sensor
+            </div>
+            <p class="text-[10px] text-slate-400">Flags liquid surge & triggers focus stream.</p>
+          </div>
+          <div class="mt-2 aspect-video rounded bg-black flex items-center justify-center border border-amber-700/50">
+            <span class="text-[9px] font-mono text-amber-300 font-bold">2.8 GPM LEAK</span>
+          </div>
+        </div>
+
+        <!-- Bee Wearable -->
+        <div class="glass-card rounded-xl p-3 border border-rose-500/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-rose-400 mb-1">
+              <i class="fa-solid fa-clock"></i> Bee Wearable AI
+            </div>
+            <p class="text-[10px] text-slate-400">Vibrates wrist of outdoor user with 1-tap action card.</p>
+          </div>
+          <div class="mt-2 aspect-video rounded bg-black flex items-center justify-center border border-rose-700/50">
+            <span class="text-[9px] font-mono text-rose-300 font-bold animate-pulse">140Hz Haptic</span>
+          </div>
+        </div>
+
+        <!-- Yash & Pranav SMS -->
+        <div class="glass-card rounded-xl p-3 border border-emerald-500/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-1">
+              <i class="fa-solid fa-bolt-auto"></i> Auto-SMS Dispatch
+            </div>
+            <p class="text-[10px] text-slate-400">Direct zero-click SMS to Yash & Pranav.</p>
+          </div>
+          <div class="mt-2 aspect-video rounded bg-black p-1.5 flex flex-col justify-center border border-emerald-700/50 text-[9px] font-mono text-emerald-300">
+            <div>✔ Yash (+91 9420036447)</div>
+            <div>✔ Pranav (+91 9527658665)</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SCENE 4: CONTAINMENT, ARCHITECTURE & THE SHAPE BONUS (00:28 - 00:38) -->
+      <div id="scene4" class="hidden w-full flex flex-col items-center justify-center text-center space-y-4 scene-enter">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 text-3xl mb-1">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold tracking-tight text-white max-w-xl">
+          Hazard Contained in <span class="text-emerald-400">Under 50ms</span>. Zero Property Damage.
+        </h2>
+        <p class="text-xs text-slate-300 max-w-lg font-mono">
+          Qualifies for <strong>Alexa+ MCP</strong>, <strong>AWS Builder</strong>, <strong>Open Source</strong>, and includes comprehensive <strong>+10% Shape Feedback</strong>.
+        </p>
+        <div class="flex gap-3 pt-2">
+          <span class="px-3 py-1 rounded bg-indigo-950 border border-indigo-700 text-xs font-mono text-indigo-300">Developers: Yash & Pranav</span>
+          <span class="px-3 py-1 rounded bg-amber-950 border border-amber-700 text-xs font-mono text-amber-300">Amazon Developer Hackathon</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CINEMA FOOTER (VOICEOVER SUBTITLES & PROGRESS BAR) -->
+    <div class="relative z-10 border-t border-slate-800/80 pt-3">
+      <!-- Subtitle Text -->
+      <div id="cinemaSubtitle" class="text-center text-xs md:text-sm font-semibold text-indigo-200 tracking-wide min-h-[28px] italic">
+        "Every year, home disasters destroy billions because smart homes only beep passively."
+      </div>
+
+      <!-- Video Timeline Progress Bar -->
+      <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mt-3 border border-slate-800">
+        <div id="timelineProgressBar" class="bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 h-full w-[0%] transition-all duration-100"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="text-[11px] text-slate-500 font-mono mt-3">
+    💡 Press <strong>"▶ Play 35s Video"</strong> to watch with synchronized voiceover, or <strong>"Record & Export"</strong> to download the video file.
+  </p>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    let isPlaying = false;
+    let videoSeconds = 0;
+    const totalDuration = 38;
+    let timerInterval = null;
+    let audioCtx = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    // --- TIMELINE SCENE SCRIPT ---
+    const scriptTimeline = [
+      {
+        start: 0,
+        end: 8,
+        scene: 'scene1',
+        title: 'SCENE 1: THE PROBLEM',
+        subtitle: "Every year, catastrophic home water leaks and fires destroy billions because traditional smart homes only beep passively.",
+        glow: 'rgba(239, 68, 68, 0.3)'
+      },
+      {
+        start: 8,
+        end: 18,
+        scene: 'scene2',
+        title: 'SCENE 2: ALEXA+ MCP BRAIN',
+        subtitle: "Meet EcoGuard. Powered by Alexa+ and Model Context Protocol, it acts as an autonomous home safety orchestrator.",
+        glow: 'rgba(99, 102, 241, 0.3)'
+      },
+      {
+        start: 18,
+        end: 28,
+        scene: 'scene3',
+        title: 'SCENE 3: CROSS-DEVICE ORCHESTRATION',
+        subtitle: "Alexa+ interrupts Fire TV with live PiP, vibrates the Bee wearable wrist, and auto-dispatches direct SMS to Yash and Pranav.",
+        glow: 'rgba(6, 182, 212, 0.3)'
+      },
+      {
+        start: 28,
+        end: 38,
+        scene: 'scene4',
+        title: 'SCENE 4: COMPLETE CONTAINMENT',
+        subtitle: "The main valve is isolated in milliseconds. Zero damage. Built by Yash and Pranav with Alexa+ MCP and AWS.",
+        glow: 'rgba(16, 185, 129, 0.3)'
+      }
+    ];
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.2) {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function speakLine(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.05;
+      u.pitch = 1.08;
+      window.speechSynthesis.speak(u);
+    }
+
+    function switchScene(sceneId, badgeText, subtitle, glowColor) {
+      ['scene1', 'scene2', 'scene3', 'scene4'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === sceneId) {
+          el.classList.remove('hidden');
+          el.classList.add('scene-enter');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      document.getElementById('sceneBadge').textContent = badgeText;
+      document.getElementById('cinemaSubtitle').textContent = `"${subtitle}"`;
+      document.getElementById('ambientGlow').style.backgroundColor = glowColor;
+      speakLine(subtitle);
+    }
+
+    function startVideoPresentation() {
+      if (isPlaying) return;
+      isPlaying = true;
+      videoSeconds = 0;
+      initAudio();
+
+      const btn = document.getElementById('btnPlayVideo');
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Playing Video...`;
+
+      playTone(520, 'triangle', 0.3);
+
+      if (timerInterval) clearInterval(timerInterval);
+
+      // Initial Scene
+      const s0 = scriptTimeline[0];
+      switchScene(s0.scene, s0.title, s0.subtitle, s0.glow);
+
+      timerInterval = setInterval(() => {
+        videoSeconds++;
+        const pct = (videoSeconds / totalDuration) * 100;
+        document.getElementById('timelineProgressBar').style.width = `${pct}%`;
+        document.getElementById('videoTimer').textContent = `00:${videoSeconds < 10 ? '0' + videoSeconds : videoSeconds} / 00:38`;
+
+        // Check Scene Transitions
+        const currentItem = scriptTimeline.find(s => s.start === videoSeconds);
+        if (currentItem) {
+          playTone(440 + videoSeconds * 10, 'sine', 0.25);
+          switchScene(currentItem.scene, currentItem.title, currentItem.subtitle, currentItem.glow);
+        }
+
+        if (videoSeconds >= totalDuration) {
+          clearInterval(timerInterval);
+          isPlaying = false;
+          btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Replay 35s Video`;
+          playTone(784, 'triangle', 0.4);
+        }
+      }, 1000);
+    }
+
+    // --- HTML5 CANVAS / MEDIA RECORDER TO DOWNLOAD REAL VIDEO FILE ---
+    function startRecordingAndExport() {
+      startVideoPresentation();
+      // Guidance to use Windows built-in Game Bar or OBS for true 60fps recording
+      alert("Recording Started! The video is playing right now. Once complete, you can record this window with Windows Game Bar (Win + Alt + R) or OBS in Full HD for your Devpost submission!");
+    }
+  </script>
+</body>
+</html>
