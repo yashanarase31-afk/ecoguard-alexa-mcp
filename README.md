@@ -68,3 +68,4 @@ flowchart TD
 2. Click **"Trigger Anomaly & Auto-SMS"** or **"🎬 Auto-Play Video Demo"**.
 3. The system automatically fires the background SMS payload directly to **Yash** and **Pranav** instantly with **zero buttons to press**!
 4. The screen shows the delivery receipts, latency in milliseconds, and real-time wire logs for your video recording.
+5. Here is the demo video link and explanation of the project https://youtu.be/9dxwQv5vIOU?si=9ESIG0tXdPsPtGhh
